@@ -1,157 +1,155 @@
 local library = {}
-local UIS = game:GetService("UserInputService")
-local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "SV_UI"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
 
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.Position = UDim2.new(0, 20, 0, 100)
-mainFrame.Size = UDim2.new(0, 250, 0, 300)
-mainFrame.Visible = true
-mainFrame.ClipsDescendants = true
-Instance.new("UICorner", mainFrame)
+function library:uiName(titleText)
+    local player = game.Players.LocalPlayer
+    local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+    gui.Name = "SV_GUI"
+    gui.ResetOnSpawn = false
 
-local scroll = Instance.new("ScrollingFrame", mainFrame)
-scroll.Size = UDim2.new(1, 0, 1, 0)
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.ScrollBarThickness = 6
-scroll.BackgroundTransparency = 1
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.new(0, 250, 0, 300)
+    main.Position = UDim2.new(0.5, -125, 0.5, -150)
+    main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    main.BorderSizePixel = 0
+    main.AnchorPoint = Vector2.new(0.5, 0.5)
+    main.Active = true
+    main.Draggable = true
 
-local layout = Instance.new("UIListLayout", scroll)
-layout.Padding = UDim.new(0, 5)
+    local title = Instance.new("TextLabel", main)
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundTransparency = 1
+    title.Text = titleText or "SV-GUI"
+    title.Font = Enum.Font.GothamBold
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.TextSize = 18
 
-local function updateScroll()
-	scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-end
-layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScroll)
+    local container = Instance.new("ScrollingFrame", main)
+    container.Size = UDim2.new(1, -10, 1, -40)
+    container.Position = UDim2.new(0, 5, 0, 35)
+    container.CanvasSize = UDim2.new(0, 0, 0, 0)
+    container.ScrollBarThickness = 4
+    container.BackgroundTransparency = 1
+    container.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-local offset = 0
-function library.uiName(name)
-	local title = Instance.new("TextLabel", scroll)
-	title.Text = name
-	title.Size = UDim2.new(1, -10, 0, 30)
-	title.Font = Enum.Font.Arcade
-	title.TextColor3 = Color3.new(1, 1, 1)
-	title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	title.BackgroundTransparency = 0
-	title.TextScaled = true
-	title.BorderSizePixel = 0
-	Instance.new("UICorner", title)
-end
+    local layout = Instance.new("UIListLayout", container)
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
 
-function library.uiToggle(name, callback)
-	local btn = Instance.new("TextButton", scroll)
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	btn.Font = Enum.Font.Arcade
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.TextXAlignment = Enum.TextXAlignment.Left
-	btn.Text = name
-	btn.BorderSizePixel = 0
+    local function makeToggle(name, callback)
+        local button = Instance.new("TextButton", container)
+        button.Size = UDim2.new(1, 0, 0, 30)
+        button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        button.Text = name .. " [OFF]"
+        button.Font = Enum.Font.Gotham
+        button.TextColor3 = Color3.new(1,1,1)
+        button.TextSize = 14
+        local state = false
+        button.MouseButton1Click:Connect(function()
+            state = not state
+            button.Text = name .. (state and " [ON]" or " [OFF]")
+            pcall(callback, state)
+        end)
+    end
 
-	local box = Instance.new("Frame", btn)
-	box.Size = UDim2.new(0, 20, 0, 20)
-	box.Position = UDim2.new(1, -30, 0.5, -10)
-	box.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-	Instance.new("UICorner", box)
+    local function makeButton(name, callback)
+        local button = Instance.new("TextButton", container)
+        button.Size = UDim2.new(1, 0, 0, 30)
+        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        button.Text = name
+        button.Font = Enum.Font.Gotham
+        button.TextColor3 = Color3.new(1,1,1)
+        button.TextSize = 14
+        button.MouseButton1Click:Connect(function()
+            pcall(callback)
+        end)
+    end
 
-	local toggled = false
-	btn.MouseButton1Click:Connect(function()
-		toggled = not toggled
-		box.BackgroundColor3 = toggled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-		callback(toggled)
-	end)
-end
+    local function makeSlider(name, min, max, callback)
+        local label = Instance.new("TextLabel", container)
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Text = name .. ": " .. tostring(min)
+        label.Font = Enum.Font.Gotham
+        label.TextColor3 = Color3.new(1,1,1)
+        label.TextSize = 13
 
-function library.uiButton(name, callback)
-	local btn = Instance.new("TextButton", scroll)
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	btn.Font = Enum.Font.Arcade
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Text = name
-	btn.BorderSizePixel = 0
-	Instance.new("UICorner", btn)
-	btn.MouseButton1Click:Connect(callback)
-end
+        local sliderBack = Instance.new("Frame", container)
+        sliderBack.Size = UDim2.new(1, 0, 0, 18)
+        sliderBack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        local sliderFill = Instance.new("Frame", sliderBack)
+        sliderFill.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+        sliderFill.Size = UDim2.new(0, 0, 1, 0)
+        sliderFill.BorderSizePixel = 0
 
-function library.uiSlider(name, min, max, callback)
-	local frame = Instance.new("Frame", scroll)
-	frame.Size = UDim2.new(1, -10, 0, 40)
-	frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	Instance.new("UICorner", frame)
+        local dragging = false
+        sliderBack.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+            end
+        end)
+        sliderBack.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
 
-	local label = Instance.new("TextLabel", frame)
-	label.Size = UDim2.new(1, 0, 0.5, 0)
-	label.Font = Enum.Font.Arcade
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.Text = name .. ": " .. min
-	label.BackgroundTransparency = 1
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                local pos = math.clamp((input.Position.X - sliderBack.AbsolutePosition.X) / sliderBack.AbsoluteSize.X, 0, 1)
+                sliderFill.Size = UDim2.new(pos, 0, 1, 0)
+                local value = math.floor(min + (max - min) * pos)
+                label.Text = name .. ": " .. value
+                pcall(callback, value)
+            end
+        end)
+    end
 
-	local slider = Instance.new("TextButton", frame)
-	slider.Position = UDim2.new(0, 0, 0.5, 0)
-	slider.Size = UDim2.new(1, 0, 0.5, 0)
-	slider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-	slider.Text = ""
-	slider.AutoButtonColor = false
-	local percent = min
+    local function makeDropdown(name, items, callback)
+        local dropdown = Instance.new("TextButton", container)
+        dropdown.Size = UDim2.new(1, 0, 0, 30)
+        dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        dropdown.Text = name .. ": [Select]"
+        dropdown.Font = Enum.Font.Gotham
+        dropdown.TextColor3 = Color3.new(1,1,1)
+        dropdown.TextSize = 14
 
-	slider.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			local conn
-			conn = UIS.InputChanged:Connect(function(move)
-				if move.UserInputType == Enum.UserInputType.MouseMovement or move.UserInputType == Enum.UserInputType.Touch then
-					local rel = move.Position.X - slider.AbsolutePosition.X
-					local ratio = math.clamp(rel / slider.AbsoluteSize.X, 0, 1)
-					local value = math.floor(min + (max - min) * ratio)
-					label.Text = name .. ": " .. value
-					callback(value)
-				end
-			end)
-			UIS.InputEnded:Once(function()
-				if conn then conn:Disconnect() end
-			end)
-		end
-	end)
-end
+        local open = false
+        local dropItems = {}
 
-function library.uiDropdown(name, options, callback)
-	local drop = Instance.new("TextButton", scroll)
-	drop.Size = UDim2.new(1, -10, 0, 30)
-	drop.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-	drop.Font = Enum.Font.Arcade
-	drop.TextColor3 = Color3.new(1, 1, 1)
-	drop.Text = name .. ": " .. options[1]
-	drop.BorderSizePixel = 0
-	Instance.new("UICorner", drop)
-	local showing = false
-	local dropdownFrame = Instance.new("Frame", scroll)
-	dropdownFrame.Size = UDim2.new(1, -10, 0, #options * 25)
-	dropdownFrame.BackgroundTransparency = 1
-	dropdownFrame.Visible = false
-	local list = Instance.new("UIListLayout", dropdownFrame)
-	for _, opt in pairs(options) do
-		local optBtn = Instance.new("TextButton", dropdownFrame)
-		optBtn.Size = UDim2.new(1, 0, 0, 25)
-		optBtn.Text = opt
-		optBtn.Font = Enum.Font.Arcade
-		optBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		optBtn.TextColor3 = Color3.new(1, 1, 1)
-		optBtn.BorderSizePixel = 0
-		optBtn.MouseButton1Click:Connect(function()
-			drop.Text = name .. ": " .. opt
-			dropdownFrame.Visible = false
-			showing = false
-			callback(opt)
-		end)
-	end
-	drop.MouseButton1Click:Connect(function()
-		showing = not showing
-		dropdownFrame.Visible = showing
-	end)
+        dropdown.MouseButton1Click:Connect(function()
+            open = not open
+            for _, obj in ipairs(dropItems) do obj:Destroy() end
+            dropItems = {}
+
+            if open then
+                for _, item in ipairs(items) do
+                    local choice = Instance.new("TextButton", container)
+                    choice.Size = UDim2.new(1, 0, 0, 25)
+                    choice.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+                    choice.Text = "  ↳ " .. item
+                    choice.Font = Enum.Font.Gotham
+                    choice.TextColor3 = Color3.new(1,1,1)
+                    choice.TextSize = 13
+                    table.insert(dropItems, choice)
+
+                    choice.MouseButton1Click:Connect(function()
+                        dropdown.Text = name .. ": [" .. item .. "]"
+                        pcall(callback, item)
+                        open = false
+                        for _, obj in ipairs(dropItems) do obj:Destroy() end
+                        dropItems = {}
+                    end)
+                end
+            end
+        end)
+    end
+
+    return {
+        uiToggle = makeToggle,
+        uiButton = makeButton,
+        uiSlider = makeSlider,
+        uiDropdown = makeDropdown
+    }
 end
 
 return library
